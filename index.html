@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<header>
+    <script src="todo.js" defer></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</header>
+
+<body>
+    <h1>Todo List</h1>
+
+    <ul id="todo-list">
+        <li id="test">
+            <p>Whatup</p>
+            <button class="edit-btn" onclick="editEntry(this.parentElement.id)">Edit</button>
+            <button class="delete-btn" onclick="removeEntry(this.parentElement.id)">Delete</button>
+        </li>
+    </ul>
+
+    <input type="text" id="candidate"></input>
+    <button onclick="addEntry()">Add</button>
+
+</body>
+
+</html>
