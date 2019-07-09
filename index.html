@@ -3,22 +3,56 @@
 <header>
     <script src="todo.js" defer></script>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css">
 </header>
 
 <body>
-    <h1>Todo List</h1>
+    <div class="container">
+        <div id="title" class="jumbotron">
+            <h1 class="display-4">Todo List</h1>
+            <p class="lead">Tired of stumbling through your day and forgetting what you need to do? Keep a sharp mind with ...TODO!</p>
+        </div>
+    </div>
 
-    <ul id="todo-list">
-        <li id="test">
-            <p>Whatup</p>
-            <button class="edit-btn" onclick="editEntry(this.parentElement.id)">Edit</button>
-            <button class="delete-btn" onclick="removeEntry(this.parentElement.id)">Delete</button>
-        </li>
-    </ul>
+    <div id="list-container" class="container">
+        <ul id="todo-list" class="list-group">
+            <li id="test" class="list-group-item list-group-item-action d-flex align-items-center bd-highlight">
+                <div class="p-2 flex-grow-1 bd-highlight list-item-text">Whatup</div>
+                <div class="p-2 bd-highlight edit-btn" onclick="editEntry(this.parentElement.id)">
+                    <span class="badge">Edit</span>
+                </div>
+                <div class="p-2 bd-highlight delete-btn" onclick="removeEntry(this.parentElement.id)">
+                    <span class="badge">Delete</span>
+                </div>
+            </li>
 
-    <input type="text" id="candidate"></input>
-    <button onclick="addEntry()">Add</button>
+            <!--
+            <li id="test-input" class="list-group-item list-group-item-action d-flex align-items-center bd-highlight">
+                <div class="p-2 flex-grow-1 bd-highlight">
+                    <input type="text" class="form-control" placeholder="Feed the doggie...">
+                </div>
+                <div class="p-2 bd-highlight edit-btn">
+                    <span class="badge" onclick="editEntry(this.parentElement.id)">Edit</span>
+                </div>
+                <div class="p-2 bd-highlight delete-btn" onclick="removeEntry(this.parentElement.id)">
+                    <span class="badge">Delete</span>
+                </div>
+            </li>
+            -->
 
+
+        </ul>
+    </div>
+
+    <div class="container">
+        <div class="form-group">
+            <input type="text" class="form-control" id="candidate" placeholder="Feed the doggie...">
+        </div>
+        <button onclick="addEntry()" class="btn btn-primary">Add</button>
+
+        <!--<input type="text" id="candidate"></input>-->
+        <!--<button onclick="addEntry()">Add</button>-->
+    </div>
 </body>
 
 </html>

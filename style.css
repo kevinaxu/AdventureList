@@ -1,0 +1,15 @@
+#title {
+    padding: 2rem 2rem;
+}
+
+#list-container {
+    padding-bottom: 2rem;
+}
+
+.list-group-item {
+    height: 80px;
+}
+
+.list-item-text {
+    font-size: 20;
+}

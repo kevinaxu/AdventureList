@@ -1,26 +1,3 @@
-function addEntry() {
-    var ul = document.getElementById("todo-list");
-    var candidate = document.getElementById("candidate");
-
-    // TODO: validate that this is not empty
-    console.log(candidate);
-    
-    if (candidate.value) {
-        todo.addEntry(candidate.value);
-
-        var li = 
-            `<li id=${candidate.value}>
-                <p>${candidate.value}</p>
-                <button class="edit-btn" onclick="editEntry(this.parentElement.id)">Edit</button>
-                <button class="delete-btn" onclick="removeEntry(this.parentElement.id)">Delete</button>
-            </li>`;
-        ul.insertAdjacentHTML('beforeend', li);
-
-        // clear out the input box after adding
-        candidate.value = "";
-    }
-}
-
 function removeEntry(id) {
     console.log("removing list entry", id);
     var li = document.getElementById(id);
@@ -30,6 +7,30 @@ function removeEntry(id) {
     }
 };
 
+function addEntry() {
+    var ul = document.getElementById("todo-list");
+    var candidate = document.getElementById("candidate");
+    
+    if (candidate.value) {
+        var li = 
+            `<li id=${candidate.value} class="list-group-item list-group-item-action d-flex align-items-center bd-highlight">
+                <div class="p-2 flex-grow-1 bd-highlight list-item-text">
+                    ${candidate.value}
+                </div>
+                <div class="p-2 bd-highlight edit-btn" onclick="editEntry(this.parentElement.id)">
+                    <span class="badge">Edit</span>
+                </div>
+                <div class="p-2 bd-highlight delete-btn" onclick="removeEntry(this.parentElement.id)">
+                    <span class="badge">Delete</span>
+                </div>
+            </li>`;
+        ul.insertAdjacentHTML('beforeend', li);
+
+        // clear out the input box after adding
+        candidate.value = "";
+    }
+}
+
 function editEntry(id) {
     var li = document.getElementById(id);
 
@@ -37,24 +38,40 @@ function editEntry(id) {
     var deleteBtn = li.getElementsByClassName('delete-btn')[0];
     deleteBtn.style.display = 'none';
 
-    // create a new Input with the <p> tag value
-    var pTag = li.getElementsByTagName('p')[0];
-    var input = document.createElement('input');
-    input.setAttribute('type', 'text');
-    input.setAttribute('value', pTag.innerText);
+    // create a new Input div with value set to the list item text
+    var textDiv = li.getElementsByClassName('list-item-text')[0];
+    var inputTemplate = document.createElement('template');
+    var inputHtml = 
+        `<div class="p-2 flex-grow-1 bd-highlight list-item-input">
+            <input type="text" class="form-control" placeholder="Feed the doggie..." value=${textDiv.innerHTML}>
+        </div>`.trim();
+    inputTemplate.innerHTML = inputHtml;
+    var inputDiv = inputTemplate.content.firstChild;
 
-    // TODO: this button doesn't actually do something,
-    // but because you lose focus from the input when you click it,
-    // it triggers the focusout event below!
-    // create a Save button to replace Edit
-    var saveBtn = document.createElement("button");
-    saveBtn.setAttribute('class', 'save-btn');
-    saveBtn.innerHTML = "Save";
+    // create the Save button
+    // This button isn't hooked up! But because we're listening for "focusout" events,
+    // clicking the button will trigger that action
+    var saveBtnTemplate = document.createElement('template');
+    var saveBtnHtml = 
+        `<div class="p-2 bd-highlight save-btn">
+            <span class="badge">Save</span>
+        </div>`;
+    saveBtnTemplate.innerHTML = saveBtnHtml;
+    var saveBtn = saveBtnTemplate.content.firstChild;
+
+    // replace the Edit with Save
     var editBtn = li.getElementsByClassName('edit-btn')[0];
     li.replaceChild(saveBtn, editBtn);
 
-    li.replaceChild(input, pTag);
-    input.focus();
+    li.replaceChild(inputDiv, textDiv);
+    inputDiv.getElementsByTagName('input')[0].focus();
+}
+
+function createElementFromHtml(html) {
+    var template = document.createElement('template');
+    var html = html.trim();
+    template.innerHTML = html;
+    return template.content.firstChild;
 }
 
 var todoList = document.querySelector('#todo-list');
@@ -67,20 +84,24 @@ todoList.addEventListener(
 
         if (e.target.nodeName === "INPUT") {
             var input = e.target;
-            var li = input.parentElement;
+            var itemInput = input.parentElement;
+            var li = itemInput.parentElement;
 
-            // create a new <p> tag instead of the input
-            var pTag = document.createElement("p");
-            pTag.innerHTML = input.value;
-            li.replaceChild(pTag, input);
+            // create a new List Item Text using Item Input value
+            var itemText = createElementFromHtml(
+                `<div class="p-2 flex-grow-1 bd-highlight list-item-text">
+                    ${input.value}
+                </div>`
+            );
+            li.replaceChild(itemText, itemInput);
 
-            // change Save back to Edit
+            // change Save button back to Edit button
             var saveBtn = li.getElementsByClassName("save-btn")[0];
-            var editBtn = document.createElement("button");
-
-            editBtn.setAttribute("class", "edit-btn");
-            editBtn.innerHTML = "Edit";
-            editBtn.setAttribute('onclick', 'editEntry(this.parentElement.id)');
+            var editBtn = createElementFromHtml(
+                `<div class="p-2 bd-highlight edit-btn" onclick="editEntry(this.parentElement.id)">
+                    <span class="badge">Edit</span>
+                </div>`
+            );
             li.replaceChild(editBtn, saveBtn);
 
             // show the Delete button again
