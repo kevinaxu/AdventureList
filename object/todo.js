@@ -71,6 +71,13 @@ class TodoList {
         return listItems[0];
     }
 
+    _getCheckedItems() {
+        var listItems = this.listItems.filter(function(item) {
+            return item.checked === true;
+        });
+        return listItems;
+    }
+
     _updateListItem(id, newText) {
         this.listItems.forEach(item => {
             if (item.id === id) {
@@ -166,16 +173,77 @@ class TodoList {
         var li = document.getElementById(id);
         var checkbox = li.getElementsByClassName('list-item-check')[0];
 
+        // TODO: MAKE SURE THIS WORKS WHEN IT'S JS TOO!
+        // whenever a checkbox gets touched
+        //this.recomputeButtonState();
+
         var listItem = this._getListItem(li.id);
         if (checkbox.checked) {
             li.classList.add("active");
             listItem.setChecked();
+            console.log("checked da box", li.id);
         } else {
             li.classList.remove("active");
             listItem.setNotChecked();
+            console.log("unchecked da box", li.id);
+        }
+    }
+    
+    /**
+     * BUTTON GROUP OPERATIONS
+     */
+    toggleListItems(shouldSelect) {
+        var collection = this.ul.getElementsByTagName('li');
+        for (var li of collection) {
+            if (li) {
+                var checkbox = li.getElementsByClassName('list-item-check')[0];
+
+                console.log(li);
+                var listItem = this._getListItem(li.id);
+                if (shouldSelect) {
+                    li.classList.add("active");
+                    checkbox.checked = true;
+                    listItem.setChecked();
+                } else {
+                    li.classList.remove("active");
+                    checkbox.checked = false;
+                    listItem.setNotChecked();
+                }
+            }
         }
     }
 
+    disableSelected() {
+        var checkedItems = this._getCheckedItems();
+        console.log(checkedItems);
+        if (checkedItems && checkedItems.length > 0) {
+            checkedItems.forEach(item => {
+                var li = document.getElementById(item.id);
+                li.classList.add("disabled");
+
+                item.state = "disabled";
+
+                // add a strikethrough to the text
+                var text = li.getElementsByClassName('list-item-text')[0];
+                text.style.setProperty("text-decoration", "line-through");
+            });
+        }
+
+        this.toggleListItems(false);
+    }
+
+    deleteSelected() {
+        var checkedItems = this._getCheckedItems();
+        console.log(checkedItems);
+        if (checkedItems && checkedItems.length > 0) {
+            checkedItems.forEach(item => {
+                var li = document.getElementById(item.id);
+                this.deleteListItem(li.id);
+
+                item.state = "deleted";
+            });
+        }
+    }
 
     /**
      * DEBUGGING
@@ -194,6 +262,33 @@ var todoList = new TodoList(ul, btnGroup);
 // TESTING
 //todoList.addEntry("what up bruh");
 //todoList.dumpEntries();
+
+// run these actions whenever list item checkboxes get changed
+/*
+todoList.ul.addEventListener(
+    // better here to onclick? oncheck?
+    'change',
+    function (e) {
+        if (!e.target) {
+            return;
+        }
+
+        if (e.target.nodeName === "INPUT" && e.target.type === "checkbox") {
+            console.log("tagged the box", e.target.parentElement.parentElement.id);
+
+            var bulkActions = document.getElementById('bulk-container');
+            console.log(e.target);
+
+            var deselectBtn = bulkActions.getElementsByClassName('bulk-delete-selected')[0];
+            var markCompleteBtn = bulkActions.getElementsByClassName('bulk-mark-complete')[0];
+
+            // if all checkboxes are not checked, then add disabled back
+            deselectBtn.classList.remove("disabled");
+            markCompleteBtn.classList.remove("disabled");
+        }
+    }
+);
+*/
 
 todoList.ul.addEventListener(
     'focusout',
