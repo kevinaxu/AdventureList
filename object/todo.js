@@ -46,9 +46,15 @@ class TodoList {
 
     constructor(ul, btnGroup) {
         this.ul = ul;
-        this.btnGroup = btnGroup;
-
         this.listItems = [];
+
+        // shortcuts to Bulk Action buttons
+        this.btnSelectAll = btnGroup.getElementsByClassName("bulk-select-all")[0];
+        this.btnDeselectAll = btnGroup.getElementsByClassName("bulk-deselect-all")[0];
+        this.btnMarkComplete = btnGroup.getElementsByClassName("bulk-mark-complete")[0];
+        this.btnDeleteSelected = btnGroup.getElementsByClassName("bulk-delete-selected")[0];
+
+        this.computeButtonState();
     }
 
     /**
@@ -71,9 +77,10 @@ class TodoList {
         return listItems[0];
     }
 
+    // We don't care about deleted ones since they're not visible
     _getCheckedItems() {
         var listItems = this.listItems.filter(function(item) {
-            return item.checked === true;
+            return item.checked === true && item.state !== "deleted";
         });
         return listItems;
     }
@@ -120,6 +127,7 @@ class TodoList {
 
         // clear out the input box after adding
         candidate.value = "";
+        this.computeButtonState();
 
         console.log("added list item", listItem.id);
     }
@@ -132,6 +140,7 @@ class TodoList {
             this.dumpEntries();
         }
 
+        this.computeButtonState();
         console.log("removing list item", id);
     };
 
@@ -187,6 +196,39 @@ class TodoList {
             listItem.setNotChecked();
             console.log("unchecked da box", li.id);
         }
+
+        this.computeButtonState();
+    }
+
+    computeButtonState() {
+        console.log("computing button state");
+        var checkedItems = this._getCheckedItems();
+
+        var numListItems = this.listItems.length;
+        var numCheckedItems = checkedItems.length;
+
+        // if there are no items, then everything is disabled
+        if (numListItems === 0) {
+            console.log("no items at all!");
+            [this.btnSelectAll, this.btnDeselectAll, this.btnMarkComplete, this.btnDeleteSelected].forEach(btn => {
+                btn.classList.add("disabled");
+            });
+        } else if (numListItems > 0 && numCheckedItems === 0) {
+            console.log("we have items, but none are checked!");
+            this.btnSelectAll.classList.remove("disabled");
+            [this.btnDeselectAll, this.btnMarkComplete, this.btnDeleteSelected].forEach(btn => {
+                btn.classList.add("disabled");
+            });
+        } else if (numListItems === numCheckedItems) {
+            this.btnSelectAll.classList.add("disabled");
+            [this.btnDeselectAll, this.btnMarkComplete, this.btnDeleteSelected].forEach(btn => {
+                btn.classList.remove("disabled");
+            });
+        } else {
+            [this.btnSelectAll, this.btnDeselectAll, this.btnMarkComplete, this.btnDeleteSelected].forEach(btn => {
+                btn.classList.remove("disabled");
+            });
+        }
     }
     
     /**
@@ -211,6 +253,8 @@ class TodoList {
                 }
             }
         }
+
+        this.computeButtonState();
     }
 
     disableSelected() {
