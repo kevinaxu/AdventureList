@@ -1,4 +1,6 @@
-function removeEntry(id) {
+var todoList = document.querySelector('#todo-list');
+
+function deleteEntry(id) {
     console.log("removing list entry", id);
     var li = document.getElementById(id);
     if (li) {
@@ -14,13 +16,17 @@ function addEntry() {
     if (candidate.value) {
         var li = 
             `<li id=${candidate.value} class="list-group-item list-group-item-action d-flex align-items-center bd-highlight">
+                <div class="form-check">
+                    <input class="form-check-input list-item-check" type="checkbox" onclick="toggleCheck(this)">
+                    <label class="form-check-label" for="defaultCheck1"></label>
+                </div>
                 <div class="p-2 flex-grow-1 bd-highlight list-item-text">
                     ${candidate.value}
                 </div>
                 <div class="p-2 bd-highlight edit-btn" onclick="editEntry(this.parentElement.id)">
                     <span class="badge">Edit</span>
                 </div>
-                <div class="p-2 bd-highlight delete-btn" onclick="removeEntry(this.parentElement.id)">
+                <div class="p-2 bd-highlight delete-btn" onclick="deleteEntry(this.parentElement.id)">
                     <span class="badge">Delete</span>
                 </div>
             </li>`;
@@ -40,24 +46,20 @@ function editEntry(id) {
 
     // create a new Input div with value set to the list item text
     var textDiv = li.getElementsByClassName('list-item-text')[0];
-    var inputTemplate = document.createElement('template');
-    var inputHtml = 
+    var inputDiv = createElementFromHtml(
         `<div class="p-2 flex-grow-1 bd-highlight list-item-input">
             <input type="text" class="form-control" placeholder="Feed the doggie..." value=${textDiv.innerHTML}>
-        </div>`.trim();
-    inputTemplate.innerHTML = inputHtml;
-    var inputDiv = inputTemplate.content.firstChild;
+        </div>`
+    );
 
     // create the Save button
     // This button isn't hooked up! But because we're listening for "focusout" events,
     // clicking the button will trigger that action
-    var saveBtnTemplate = document.createElement('template');
-    var saveBtnHtml = 
+    var saveBtn = createElementFromHtml(
         `<div class="p-2 bd-highlight save-btn">
             <span class="badge">Save</span>
-        </div>`;
-    saveBtnTemplate.innerHTML = saveBtnHtml;
-    var saveBtn = saveBtnTemplate.content.firstChild;
+        </div>`
+    );
 
     // replace the Edit with Save
     var editBtn = li.getElementsByClassName('edit-btn')[0];
@@ -74,15 +76,109 @@ function createElementFromHtml(html) {
     return template.content.firstChild;
 }
 
-var todoList = document.querySelector('#todo-list');
+function disableSelected() {
+    var collection = todoList.getElementsByTagName('li');
+
+    for (var li of collection) {
+        if (li) {
+            li.classList.add("disabled");
+
+            // add a strikethrough to the text
+            var text = li.getElementsByClassName('list-item-text')[0];
+            text.style.setProperty("text-decoration", "line-through");
+        }
+    }
+
+    toggleListItems(/*shouldSelect*/ false);
+}
+
+function deleteSelected() {
+    // TODO: might run into trouble if we have other LI elements in the DOM
+    var collection = document.querySelectorAll('li');
+
+    // DOESN'T WORK BECAUSE THIS IS A "LIVE" LIST
+    //var collection = todoList.getElementsByTagName('li');
+
+    for (var li of collection) {
+        if (li && li.classList.contains("active")) {
+            deleteEntry(li.id);
+        }
+    }
+}
+
+function toggleListItems(shouldSelect) {
+    var collection = todoList.getElementsByTagName('li');
+
+    for (var li of collection) {
+        if (li) {
+            var checkbox = li.getElementsByClassName('list-item-check')[0];
+            if (shouldSelect) {
+                li.classList.add("active");
+                checkbox.checked = true;
+            } else {
+                li.classList.remove("active");
+                checkbox.checked = false;
+            }
+        }
+    }
+}
+
+
+/**
+ * Highlight the List Item when the checkbox is toggled
+ * by adding/removing the "active" class
+ *
+ * @param e <input>
+ */
+function toggleCheck(e) {
+    console.log(e);
+    if (e) {
+        var li = e.parentElement.parentElement;
+        if (e.checked) {
+            li.classList.add("active");
+        } else {
+            li.classList.remove("active");
+        }
+    }
+}
+
+/**
+ * When you select a checkbox for one of the tasks,
+ * we want to mark the 'Delete Selected' and 'complete Selected' buttons as active
+ */
 todoList.addEventListener(
-    'focusout',
-    function(e) {
+    // better here to onclick? oncheck?
+    'change',
+    function (e) {
         if (!e.target) {
             return;
         }
 
-        if (e.target.nodeName === "INPUT") {
+        if (e.target.nodeName === "INPUT" && e.target.type === "checkbox") {
+            var bulkActions = document.getElementById('bulk-container');
+            console.log(e.target);
+
+            var deselectBtn = bulkActions.getElementsByClassName('bulk-delete-selected')[0];
+            var markCompleteBtn = bulkActions.getElementsByClassName('bulk-mark-complete')[0];
+
+            // if all checkboxes are not checked, then add disabled back
+            deselectBtn.classList.remove("disabled");
+            markCompleteBtn.classList.remove("disabled");
+        }
+    }
+);
+ 
+todoList.addEventListener(
+    'focusout',
+    function (e) {
+        if (!e.target) {
+            return;
+        }
+
+        if (e.target.nodeName === "INPUT" && e.target.type !== "checkbox") {
+            //console.log("running focusout actions on input");
+            //console.log(e);
+
             var input = e.target;
             var itemInput = input.parentElement;
             var li = itemInput.parentElement;

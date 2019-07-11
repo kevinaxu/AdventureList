@@ -6,6 +6,10 @@
     padding-bottom: 2rem;
 }
 
+#bulk-container {
+    padding-bottom: 2rem;
+}
+
 .list-group-item {
     height: 80px;
 }
