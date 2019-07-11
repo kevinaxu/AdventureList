@@ -24,6 +24,14 @@ class ListItem {
         return this.checked;
     }
 
+    setChecked() {
+        this.checked = true;
+    }
+
+    setNotChecked() {
+        this.checked = false;
+    }
+
     dump() {
         return {
             "id": this.id,
@@ -36,8 +44,10 @@ class ListItem {
 
 class TodoList {
 
-    constructor(ul) {
+    constructor(ul, btnGroup) {
         this.ul = ul;
+        this.btnGroup = btnGroup;
+
         this.listItems = [];
     }
 
@@ -76,42 +86,46 @@ class TodoList {
     // TODO: change var from CANDIDATE to something else
     addListItem(text) {
         var candidate = document.getElementById("candidate");
-        
-        if (candidate.value) {
-            var listItem = new ListItem(candidate.value);
-            this._addListItem(listItem);
-
-            var li = 
-                `<li id=${listItem.id} class="list-group-item list-group-item-action d-flex align-items-center bd-highlight">
-                    <div class="form-check">
-                        <input class="form-check-input list-item-check" type="checkbox" onclick="toggleCheck(this)">
-                        <label class="form-check-label" for="defaultCheck1"></label>
-                    </div>
-                    <div class="p-2 flex-grow-1 bd-highlight list-item-text">
-                        ${listItem.text}
-                    </div>
-                    <div class="p-2 bd-highlight edit-btn" onclick="todoList.editListItem(this.parentElement.id)">
-                        <span class="badge">Edit</span>
-                    </div>
-                    <div class="p-2 bd-highlight delete-btn" onclick="todoList.deleteListItem(this.parentElement.id)">
-                        <span class="badge">Delete</span>
-                    </div>
-                </li>`;
-            this.ul.insertAdjacentHTML('beforeend', li);
-
-            // clear out the input box after adding
-            candidate.value = "";
+        if (!candidate.value) {
+            return;
         }
+        
+        var listItem = new ListItem(candidate.value);
+        this._addListItem(listItem);
+
+        var li = 
+            `<li id=${listItem.id} class="list-group-item list-group-item-action d-flex align-items-center bd-highlight">
+                <div class="form-check">
+                    <input class="form-check-input list-item-check" type="checkbox" onclick="todoList.toggleCheck(this.parentElement.parentElement.id)">
+                    <label class="form-check-label" for="defaultCheck1"></label>
+                </div>
+                <div class="p-2 flex-grow-1 bd-highlight list-item-text">
+                    ${listItem.text}
+                </div>
+                <div class="p-2 bd-highlight edit-btn" onclick="todoList.editListItem(this.parentElement.id)">
+                    <span class="badge">Edit</span>
+                </div>
+                <div class="p-2 bd-highlight delete-btn" onclick="todoList.deleteListItem(this.parentElement.id)">
+                    <span class="badge">Delete</span>
+                </div>
+            </li>`;
+        this.ul.insertAdjacentHTML('beforeend', li);
+
+        // clear out the input box after adding
+        candidate.value = "";
+
+        console.log("added list item", listItem.id);
     }
 
     deleteListItem(id) {
-        console.log("removing list entry", id);
         var li = document.getElementById(id);
         if (li) {
             this._deleteListItem(id);
             li.remove();
             this.dumpEntries();
         }
+
+        console.log("removing list item", id);
     };
 
     editListItem(id) {
@@ -144,7 +158,24 @@ class TodoList {
 
         li.replaceChild(inputDiv, textDiv);
         inputDiv.getElementsByTagName('input')[0].focus();
+
+        console.log("edited list item", id);
     }
+
+    toggleCheck(id) {
+        var li = document.getElementById(id);
+        var checkbox = li.getElementsByClassName('list-item-check')[0];
+
+        var listItem = this._getListItem(li.id);
+        if (checkbox.checked) {
+            li.classList.add("active");
+            listItem.setChecked();
+        } else {
+            li.classList.remove("active");
+            listItem.setNotChecked();
+        }
+    }
+
 
     /**
      * DEBUGGING
@@ -157,7 +188,8 @@ class TodoList {
 }
 
 var ul = document.querySelector('#todo-list');
-var todoList = new TodoList(ul);
+var btnGroup = document.querySelector('#bulk-actions');
+var todoList = new TodoList(ul, btnGroup);
 
 // TESTING
 //todoList.addEntry("what up bruh");
@@ -202,6 +234,8 @@ todoList.ul.addEventListener(
             // show the Delete button again
             var deleteBtn = li.getElementsByClassName('delete-btn')[0];
             deleteBtn.style.display = '';
+
+            console.log("finished editing item", li.id);
         }
     }
 );
