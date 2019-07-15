@@ -2,95 +2,89 @@
 <html>
 <header>
     <script src="todo.js" defer></script>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" type="text/css" href="tailwind.min.css">
 </header>
 
-<body>
-    <div class="container">
-        <div id="title" class="jumbotron">
-            <h1 class="display-4">Todo List</h1>
-            <p class="lead">Tired of stumbling through your day and forgetting what you need to do? Keep a sharp mind with ...TODO!</p>
+<body class="bg-green-200 font-sans text-lg m-4">
+
+    <div class="header-container max-w-2xl px-8 pt-8 pb-1 mx-auto rounded-t-lg bg-green-100">
+        <h1 class="font-sans text-4xl mb-8 text-gray-600">Minimal List</h1>
+    </div>
+
+    <!-- Add a new List item -->
+    <div class="input-container max-w-2xl px-8 pb-10 pt-2 mx-auto bg-green-100">
+        <form class="w-full">
+            <div class="flex items-center border-b border-b-2 border-teal-500 py-2">
+                <input id="list-input" class="appearance-none bg-transparent border-none w-full text-gray-700 mr-3 py-1 px-2 leading-tight focus:outline-none" type="text" placeholder="Feed the doggie">
+                <button class="flex-shrink-0 bg-teal-500 hover:bg-teal-700 border-teal-500 hover:border-teal-700 text-sm border-4 text-white py-1 px-2 rounded" type="button"
+                    onclick="todoList.addListItem()">
+                    Add
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bulk Action operations -->
+    <div id="bulk-actions" class="flex flex-wrap justify-between items-end max-w-2xl px-8 py-3 mx-auto bg-green-100">
+
+        <!-- Select All, Deselct All Buttons - pull it left of button bar -->
+        <div class="flex justify-start flex-1">
+            <button class="bulk-select-all flex-shrink-0 m-1 bg-blue-500 hover:bg-blue-700 border-blue-500 hover:border-blue-700 text-sm border-4 text-white py-1 px-2 rounded" type="button"
+                    onclick="todoList.toggleListItems(true)">
+                <span>Select All</span>
+            </button>
+            <button class="bulk-deselect-all flex-shrink-0 m-1 bg-blue-500 hover:bg-blue-700 border-blue-500 hover:border-blue-700 text-sm border-4 text-white py-1 px-2 rounded" type="button"
+                    onclick="todoList.toggleListItems(false)">
+                <span>Deselect All</span>
+            </button>
+        </div>
+
+        <!-- Mark Complete, Remove Selected - pull it right of button bar -->
+        <div class="flex justify-end flex-1">
+            <button class="bulk-mark-complete flex-shrink-0 m-1 bg-teal-500 hover:bg-teal-700 border-teal-500 hover:border-teal-700 text-sm border-4 text-white py-1 px-2 rounded" type="button"
+                    onclick="todoList.disableSelected()">
+                <span>Mark Complete</span>
+            </button>
+            <button class="bulk-delete-selected flex-shrink-0 m-1 bg-red-500 hover:bg-red-700 border-red-500 hover:border-red-700 text-sm border-4 text-white py-1 px-2 rounded" type="button"
+                    onclick="todoList.deleteSelected()">
+                <span>Remove Selected</span>
+            </button>
         </div>
     </div>
 
-    <div id="bulk-container" class="container">
-        <div class="btn-toolbar">
-            <div class="btn-group mr-2" onclick="toggleListItems(true)">
-                <button type="button" class="btn btn-secondary bulk-select-all">Select All</button>
-            </div>
-            <div class="btn-group mr-2" onclick="toggleListItems(false)">
-                <button type="button" class="btn btn-secondary bulk-deselect-all">Deselect All</button>
-            </div>
-            <div class="btn-group mr-2" onclick="disableSelected()">
-                <button type="button" class="btn btn-secondary bulk-mark-complete disabled">Mark as Complete</button>
-            </div>
-            <div class="btn-group" onclick="deleteSelected()">
-                <button type="button" class="btn btn-secondary bulk-delete-selected disabled">Delete Selected</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="list-container" class="container">
-        <ul id="todo-list" class="list-group">
-            <li id="test" class="list-group-item list-group-item-action d-flex align-items-center bd-highlight">
-                <div class="form-check">
-                    <input class="form-check-input list-item-check" type="checkbox" onclick="toggleCheck(this)">
-                    <label class="form-check-label" for="defaultCheck1"></label>
-                </div>
-                <div class="p-2 flex-grow-1 bd-highlight list-item-text">
-                    Whatup
-                </div>
-                <div class="p-2 bd-highlight edit-btn" onclick="editEntry(this.parentElement.id)">
-                    <span class="badge">Edit</span>
-                </div>
-                <div class="p-2 bd-highlight delete-btn" onclick="deleteEntry(this.parentElement.id)">
-                    <span class="badge">Delete</span>
-                </div>
-            </li>
-
-            <li id="test-checkbox" class="list-group-item list-group-item-action d-flex align-items-center bd-highlight">
-                <div class="form-check">
-                    <input class="form-check-input list-item-check" type="checkbox" onclick="toggleCheck(this)">
-                    <label class="form-check-label" for="defaultCheck1"></label>
-                </div>
-                <div class="p-2 flex-grow-1 bd-highlight list-item-text">
-                    Whatup
-                </div>
-                <div class="p-2 bd-highlight edit-btn" onclick="editEntry(this.parentElement.id)">
-                    <span class="badge">Edit</span>
-                </div>
-                <div class="p-2 bd-highlight delete-btn" onclick="deleteEntry(this.parentElement.id)">
-                    <span class="badge">Delete</span>
-                </div>
-            </li>
+    <!-- List Dispaly -->
+    <div id="list-container" class="flex justify-between items-end max-w-2xl px-8 py-3 mx-auto mb-4 rounded-b-lg bg-green-100">
+        <ul id="todo-list" class="list-reset w-full pb-8">
 
             <!--
-            <li id="test-input" class="list-group-item list-group-item-action d-flex align-items-center bd-highlight">
-                <div class="p-2 flex-grow-1 bd-highlight">
-                    <input type="text" class="form-control" placeholder="Feed the doggie...">
+            <li class="flex justify-between items-center h-16 w-full border-b border-b-2 border-teal-500 hover:bg-blue-200"
+                onclick="todoList.editListItem(this.parentElement.id)">
+                <div class="flex-initial px-2 mb-1 ml-1">
+                    <input class="list-item-check" type="checkbox"
+                    onclick="todoList.toggleCheck(this.parentElement.parentElement.id)">
+                    <label></label>
                 </div>
-                <div class="p-2 bd-highlight edit-btn">
-                    <span class="badge" onclick="editEntry(this.parentElement.id)">Edit</span>
+                <div class="list-item-text flex-auto px-2 text-lg">
+                    <input class="w-full bg-transparent border-none text-gray-700 focus:outline-none" type="text" placeholder="Feed the doggie">
+                    What up bruh
                 </div>
-                <div class="p-2 bd-highlight delete-btn" onclick="removeEntry(this.parentElement.id)">
-                    <span class="badge">Delete</span>
+                <div class="flex-initial p-1 m-1" onclick="todoList.editListItem(this.parentElement.id)">
+                    <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20pt" height="16pt" viewBox="0 0 24 20" version="1.1">
+                        <g id="surface1">
+                        <path style="fill:none;stroke-width:14;stroke-linecap:butt;stroke-linejoin:miter;stroke:rgb(0%,80%,0%);stroke-opacity:1;stroke-miterlimit:4;" d="M 19.990234 130 L 60.008138 170 L 200.014648 30 " transform="matrix(0.104348,0,0,0.1,0,0)"/>
+                        </g>
+                    </svg>
+                </div>
+                <div class="flex-initial p-1 m-1" onclick="todoList.deleteListItem(this.parentElement.id)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24">
+                        <path fill="#FC8181" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+                    </svg>
+
                 </div>
             </li>
+
             -->
-
-
         </ul>
-    </div>
-
-    <div class="container">
-        <div class="form-group">
-            <input type="text" class="form-control" id="candidate" placeholder="Feed the doggie...">
-        </div>
-        <button onclick="addEntry()" class="btn btn-primary">Add</button>
-
-        <!--<input type="text" id="candidate"></input>-->
-        <!--<button onclick="addEntry()">Add</button>-->
     </div>
 </body>
 

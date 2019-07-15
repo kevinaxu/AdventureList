@@ -1,74 +1,6 @@
-var todoList = document.querySelector('#todo-list');
-
-function deleteEntry(id) {
-    console.log("removing list entry", id);
-    var li = document.getElementById(id);
-    if (li) {
-        li.remove();
-        //todo.removeEntry(candidate.value);
-    }
-};
-
-function addEntry() {
-    var ul = document.getElementById("todo-list");
-    var candidate = document.getElementById("candidate");
-    
-    if (candidate.value) {
-        var li = 
-            `<li id=${candidate.value} class="list-group-item list-group-item-action d-flex align-items-center bd-highlight">
-                <div class="form-check">
-                    <input class="form-check-input list-item-check" type="checkbox" onclick="toggleCheck(this)">
-                    <label class="form-check-label" for="defaultCheck1"></label>
-                </div>
-                <div class="p-2 flex-grow-1 bd-highlight list-item-text">
-                    ${candidate.value}
-                </div>
-                <div class="p-2 bd-highlight edit-btn" onclick="editEntry(this.parentElement.id)">
-                    <span class="badge">Edit</span>
-                </div>
-                <div class="p-2 bd-highlight delete-btn" onclick="deleteEntry(this.parentElement.id)">
-                    <span class="badge">Delete</span>
-                </div>
-            </li>`;
-        ul.insertAdjacentHTML('beforeend', li);
-
-        // clear out the input box after adding
-        candidate.value = "";
-    }
-}
-
-function editEntry(id) {
-    var li = document.getElementById(id);
-
-    // hide the DELETE button while we're editing
-    var deleteBtn = li.getElementsByClassName('delete-btn')[0];
-    deleteBtn.style.display = 'none';
-
-    // create a new Input div with value set to the list item text
-    var textDiv = li.getElementsByClassName('list-item-text')[0];
-    var inputDiv = createElementFromHtml(
-        `<div class="p-2 flex-grow-1 bd-highlight list-item-input">
-            <input type="text" class="form-control" placeholder="Feed the doggie..." value=${textDiv.innerHTML}>
-        </div>`
-    );
-
-    // create the Save button
-    // This button isn't hooked up! But because we're listening for "focusout" events,
-    // clicking the button will trigger that action
-    var saveBtn = createElementFromHtml(
-        `<div class="p-2 bd-highlight save-btn">
-            <span class="badge">Save</span>
-        </div>`
-    );
-
-    // replace the Edit with Save
-    var editBtn = li.getElementsByClassName('edit-btn')[0];
-    li.replaceChild(saveBtn, editBtn);
-
-    li.replaceChild(inputDiv, textDiv);
-    inputDiv.getElementsByTagName('input')[0].focus();
-}
-
+/**
+ * Utilities
+ */
 function createElementFromHtml(html) {
     var template = document.createElement('template');
     var html = html.trim();
@@ -76,99 +8,329 @@ function createElementFromHtml(html) {
     return template.content.firstChild;
 }
 
-function disableSelected() {
-    var collection = todoList.getElementsByTagName('li');
+/**
+ * Class representing a ListItem
+ */
+class ListItem {
 
-    for (var li of collection) {
+    /**
+     * Create a ListItem
+     * @param {string} text
+     */
+    constructor(text) {
+        // randomly generate a ID
+        this.id = '_' + Math.random().toString(36).substr(2, 9);
+
+        this.text = text;
+        this.state = "active";
+        this.checked = false;
+    }
+
+    /**
+     * Toggle ListItem state
+     */
+    setChecked() {
+        this.checked = true;
+    }
+    setNotChecked() {
+        this.checked = false;
+    }
+}
+
+/**
+ * Class representing the entire Todo List
+ */
+class TodoList {
+
+    /**
+     * Create a TodoList
+     *
+     * @param {Element} ul - DOM element for the parent unordered list
+     * @param {Element} btnGroup - DOM element for the Bulk Action buttons
+     */
+    constructor(ul, btnGroup) {
+        this.ul = ul;
+        this.listItems = [];
+
+        // shortcuts to Bulk Action buttons
+        this.btnSelectAll = btnGroup.getElementsByClassName("bulk-select-all")[0];
+        this.btnDeselectAll = btnGroup.getElementsByClassName("bulk-deselect-all")[0];
+        this.btnMarkComplete = btnGroup.getElementsByClassName("bulk-mark-complete")[0];
+        this.btnDeleteSelected = btnGroup.getElementsByClassName("bulk-delete-selected")[0];
+
+        this.computeButtonState();
+    }
+
+    /**
+     * Helpers to maniupate List Item state
+     */
+    _addListItem(item) {
+        this.listItems.push(item);
+    }
+
+    _completeListItem(id) {
+        var listItem = _getListItem(id);
+        listItem.state = "disabled";
+    }
+
+    _deleteListItem(id) {
+        this.listItems = this.listItems.filter(function(item) {
+            return item.id !== id;
+        });
+    }
+
+    _getListItem(id) {
+        var listItems = this.listItems.filter(function(item) {
+            return item.id === id;
+        });
+        return listItems[0];
+    }
+
+    _getCheckedItems() {
+        var listItems = this.listItems.filter(function(item) {
+            return item.checked === true && item.state !== "deleted";
+        });
+        return listItems;
+    }
+
+    _updateListItem(id, newText) {
+        this.listItems.forEach(item => {
+            if (item.id === id) {
+                item.text = newText;
+            }
+        });
+    }
+
+    /**
+     * Methods for List Item CRUD operations
+     */
+    addListItem() {
+        var inputElement = document.getElementById('list-input');
+        var inputVal = inputElement.value;
+        if (!inputVal) {
+            return;
+        }
+        
+        var listItem = new ListItem(inputVal);
+        this._addListItem(listItem);
+
+        var li = 
+            `<li id=${listItem.id} class="flex justify-between items-center h-16 w-full border-b border-b-2 border-teal-500 hover:bg-blue-200"
+                ondblclick="todoList.editListItem(this.id)">
+                <div class="flex-initial px-2 mb-1 ml-1">
+                    <input class="list-item-check" type="checkbox" onclick="todoList.toggleCheck(this.parentElement.parentElement.id)">
+                    <label></label>
+                </div>
+                <div class="list-item-text flex-auto px-2 text-lg text-gray-700">
+                    ${listItem.text}
+                </div>
+                <div class="item-check flex-initial p-1 m-1" onclick="todoList.completeListItem(this.parentElement.id)">
+                    <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20pt" height="16pt" viewBox="0 0 24 20" version="1.1">
+                        <g id="surface1">
+                        <path style="fill:none;stroke-width:14;stroke-linecap:butt;stroke-linejoin:miter;stroke:rgb(0%,80%,0%);stroke-opacity:1;stroke-miterlimit:4;" d="M 19.990234 130 L 60.008138 170 L 200.014648 30 " transform="matrix(0.104348,0,0,0.1,0,0)"/>
+                        </g>
+                    </svg>
+                </div>
+                <div class="item-remove flex-initial p-1 m-1" onclick="todoList.deleteListItem(this.parentElement.id)">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24">
+                        <path fill="#FC8181" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+                    </svg>
+
+                </div>
+            </li>`;
+
+        // insert the List Item, and clear out the input
+        this.ul.insertAdjacentHTML('afterbegin', li);
+        inputElement.value = "";
+
+        this.computeButtonState();
+        console.log("added list item", listItem.id);
+    }
+
+    deleteListItem(id) {
+        var li = document.getElementById(id);
         if (li) {
-            li.classList.add("disabled");
+            this._deleteListItem(id);
+            li.remove();
+        }
+        this.computeButtonState();
+        console.log("removing list item", id);
+    };
+
+    editListItem(id) {
+        var li = document.getElementById(id);
+        
+        // don't do anything if there's already an input
+        var inputDiv = li.getElementsByClassName('list-item-input')[0];
+        if (inputDiv) {
+            return;
+        }
+
+        // create a new Input div with value set to the list item text
+        var textDiv = li.getElementsByClassName('list-item-text')[0];
+        var inputDiv = createElementFromHtml(
+            `<div class="list-item-input flex-auto px-2 text-lg">
+                <input class="w-full bg-transparent border-none text-gray-600 focus:outline-none" value="${textDiv.innerHTML.trim()}" type="text">
+            </div>`
+        );
+
+        // move Cursor to end of input
+        li.replaceChild(inputDiv, textDiv);
+        inputDiv.getElementsByTagName('input')[0].focus();
+
+        console.log("edited list item", id);
+    }
+
+    completeListItem(id) {
+        var li = document.getElementById(id);
+        if (li) {
+            li.classList.add("opacity-50");
 
             // add a strikethrough to the text
             var text = li.getElementsByClassName('list-item-text')[0];
             text.style.setProperty("text-decoration", "line-through");
+
+            this._completeListItem(id);
         }
     }
 
-    toggleListItems(/*shouldSelect*/ false);
-}
+    toggleCheck(id) {
+        var li = document.getElementById(id);
+        var checkbox = li.getElementsByClassName('list-item-check')[0];
 
-function deleteSelected() {
-    // TODO: might run into trouble if we have other LI elements in the DOM
-    var collection = document.querySelectorAll('li');
-
-    // DOESN'T WORK BECAUSE THIS IS A "LIVE" LIST
-    //var collection = todoList.getElementsByTagName('li');
-
-    for (var li of collection) {
-        if (li && li.classList.contains("active")) {
-            deleteEntry(li.id);
+        var listItem = this._getListItem(li.id);
+        if (checkbox.checked) {
+            li.classList.add("bg-blue-200");
+            listItem.setChecked();
+        } else {
+            li.classList.remove("bg-blue-200");
+            listItem.setNotChecked();
         }
+
+        this.computeButtonState();
     }
-}
 
-function toggleListItems(shouldSelect) {
-    var collection = todoList.getElementsByTagName('li');
+    /**
+     * Methods for controlling Bulk Action buttons
+     */
+    toggleListItems(shouldSelect) {
+        var collection = this.ul.getElementsByTagName('li');
+        for (var li of collection) {
+            if (li) {
+                var checkbox = li.getElementsByClassName('list-item-check')[0];
 
-    for (var li of collection) {
-        if (li) {
-            var checkbox = li.getElementsByClassName('list-item-check')[0];
-            if (shouldSelect) {
-                li.classList.add("active");
-                checkbox.checked = true;
-            } else {
-                li.classList.remove("active");
-                checkbox.checked = false;
+                var listItem = this._getListItem(li.id);
+                if (shouldSelect) {
+                    li.classList.add("bg-blue-200");
+                    checkbox.checked = true;
+                    listItem.setChecked();
+                } else {
+                    li.classList.remove("bg-blue-200");
+                    checkbox.checked = false;
+                    listItem.setNotChecked();
+                }
             }
         }
+
+        this.computeButtonState();
     }
-}
 
+    disableSelected() {
+        var checkedItems = this._getCheckedItems();
+        if (checkedItems && checkedItems.length > 0) {
+            checkedItems.forEach(item => {
+                var li = document.getElementById(item.id);
+                li.classList.add("opacity-50");
 
-/**
- * Highlight the List Item when the checkbox is toggled
- * by adding/removing the "active" class
- *
- * @param e <input>
- */
-function toggleCheck(e) {
-    console.log(e);
-    if (e) {
-        var li = e.parentElement.parentElement;
-        if (e.checked) {
-            li.classList.add("active");
-        } else {
-            li.classList.remove("active");
+                // add a strikethrough to the text
+                var text = li.getElementsByClassName('list-item-text')[0];
+                text.style.setProperty("text-decoration", "line-through");
+            });
+        }
+
+        this.toggleListItems(false);
+    }
+
+    deleteSelected() {
+        var checkedItems = this._getCheckedItems();
+        if (checkedItems && checkedItems.length > 0) {
+            checkedItems.forEach(item => {
+                var li = document.getElementById(item.id);
+                this.deleteListItem(li.id);
+                item.state = "deleted";
+            });
         }
     }
+
+    computeButtonState() {
+        var checkedItems = this._getCheckedItems();
+
+        var numListItems = this.listItems.length;
+        var numCheckedItems = checkedItems.length;
+
+        if (numListItems === 0) {
+            [this.btnSelectAll, this.btnDeselectAll, this.btnMarkComplete, this.btnDeleteSelected].forEach(btn => {
+                btn.classList.add("cursor-not-allowed");
+                btn.classList.add("opacity-50");
+            });
+        } else if (numListItems > 0 && numCheckedItems === 0) {
+            this.btnSelectAll.classList.remove("opacity-50");
+            this.btnSelectAll.classList.remove("cursor-not-allowed");
+            [this.btnDeselectAll, this.btnMarkComplete, this.btnDeleteSelected].forEach(btn => {
+                btn.classList.add("opacity-50");
+                btn.classList.add("cursor-not-allowed");
+            });
+        } else if (numListItems === numCheckedItems) {
+            this.btnSelectAll.classList.add("opacity-50");
+            this.btnSelectAll.classList.add("cursor-not-allowed");
+            [this.btnDeselectAll, this.btnMarkComplete, this.btnDeleteSelected].forEach(btn => {
+                btn.classList.remove("opacity-50");
+                btn.classList.remove("cursor-not-allowed");
+            });
+        } else {
+            [this.btnSelectAll, this.btnDeselectAll, this.btnMarkComplete, this.btnDeleteSelected].forEach(btn => {
+                btn.classList.remove("opacity-50");
+                btn.classList.remove("cursor-not-allowed");
+            });
+        }
+    }
+    
+
+    /**
+     * Debugging Helpers
+     */
+    dumpEntries() {
+        this.listItems.forEach((item) => {
+            console.log(item.dump());
+        });
+    }
 }
 
-/**
- * When you select a checkbox for one of the tasks,
- * we want to mark the 'Delete Selected' and 'complete Selected' buttons as active
- */
-todoList.addEventListener(
-    // better here to onclick? oncheck?
-    'change',
+var ul = document.querySelector('#todo-list');
+var btnGroup = document.querySelector('#bulk-actions');
+var todoList = new TodoList(ul, btnGroup);
+
+/*
+todoList.ul.addEventListener(
+    'mouseover',
     function (e) {
         if (!e.target) {
             return;
         }
-
-        if (e.target.nodeName === "INPUT" && e.target.type === "checkbox") {
-            var bulkActions = document.getElementById('bulk-container');
-            console.log(e.target);
-
-            var deselectBtn = bulkActions.getElementsByClassName('bulk-delete-selected')[0];
-            var markCompleteBtn = bulkActions.getElementsByClassName('bulk-mark-complete')[0];
-
-            // if all checkboxes are not checked, then add disabled back
-            deselectBtn.classList.remove("disabled");
-            markCompleteBtn.classList.remove("disabled");
+        if (e.target.nodeName === "LI") {
+            console.log("entering LI", e.target.id);
+            //console.log(e);
         }
     }
 );
- 
-todoList.addEventListener(
+*/
+
+/**
+ * When the List Item is being edited and we click away,
+ * we want to convert the <input> back into a text <div>
+ * with the updated value.
+ */
+todoList.ul.addEventListener(
     'focusout',
     function (e) {
         if (!e.target) {
@@ -176,79 +338,20 @@ todoList.addEventListener(
         }
 
         if (e.target.nodeName === "INPUT" && e.target.type !== "checkbox") {
-            //console.log("running focusout actions on input");
-            //console.log(e);
-
             var input = e.target;
             var itemInput = input.parentElement;
             var li = itemInput.parentElement;
 
             // create a new List Item Text using Item Input value
             var itemText = createElementFromHtml(
-                `<div class="p-2 flex-grow-1 bd-highlight list-item-text">
+                `<div class="list-item-text flex-auto px-2 text-lg text-gray-700">
                     ${input.value}
                 </div>`
             );
             li.replaceChild(itemText, itemInput);
 
-            // change Save button back to Edit button
-            var saveBtn = li.getElementsByClassName("save-btn")[0];
-            var editBtn = createElementFromHtml(
-                `<div class="p-2 bd-highlight edit-btn" onclick="editEntry(this.parentElement.id)">
-                    <span class="badge">Edit</span>
-                </div>`
-            );
-            li.replaceChild(editBtn, saveBtn);
-
-            // show the Delete button again
-            var deleteBtn = li.getElementsByClassName('delete-btn')[0];
-            deleteBtn.style.display = '';
+            // TODO: SHOULDN'T BE PRIVATE if we're updating state like this!
+            todoList._updateListItem(li.id, input.value);
         }
     }
 );
-
-/*
-todo object API
-
-todo.addEntry('hello');
-todo.addEntry('whatup');
-todo.removeEntry('hello');
-todo.dumpEntries();
-todo.editEntry('whatup', 'whatup bro');
-todo.dumpEntries();
-*/
-var todo = {
-
-    // entries is an ordered array of objects
-    // that contain a field, completed status
-    entries: [],
-
-    addEntry(str) {
-        // first let's get
-        this.entries.push(str);
-
-        //var entry = {
-            //text: str,
-            //completed: false
-        //};
-        //this.entries.push(entry);
-    },
-
-    editEntry(old_str, new_str) {
-        var idx = this.entries.indexOf(old_str);
-        this.entries[idx] = new_str;
-    },
-
-    dumpEntries() {
-        console.log(this.entries);
-    },
-
-    // removes by index
-    removeEntry(str) {
-        var idx = this.entries.indexOf(str);
-        if (idx !== -1) {
-            this.entries.splice(idx, 1);
-        }
-    }
-};
-
