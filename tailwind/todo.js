@@ -113,7 +113,8 @@ class TodoList {
         this._addListItem(listItem);
 
         var li = 
-            `<li id=${listItem.id} class="flex justify-between items-center h-16 w-full border-b border-b-2 border-teal-500 hover:bg-blue-200">
+            `<li id=${listItem.id} class="flex justify-between items-center h-16 w-full border-b border-b-2 border-teal-500 hover:bg-blue-200"
+                ondblclick="todoList.editListItem(this.id)">
                 <div class="flex-initial px-2 mb-1 ml-1">
                     <input class="list-item-check" type="checkbox" onclick="todoList.toggleCheck(this.parentElement.parentElement.id)">
                     <label></label>
@@ -155,6 +156,47 @@ class TodoList {
         this.computeButtonState();
         console.log("removing list item", id);
     };
+
+    editListItem(id) {
+        var li = document.getElementById(id);
+        
+        // don't do anything if there's already an input
+        var inputDiv = li.getElementsByClassName('list-item-input')[0];
+        if (inputDiv) {
+            return;
+        }
+
+        // hide the DELETE button while we're editing
+        //var deleteBtn = li.getElementsByClassName('delete-btn')[0];
+        //deleteBtn.style.display = 'none';
+
+        // create a new Input div with value set to the list item text
+        var textDiv = li.getElementsByClassName('list-item-text')[0];
+        var inputDiv = createElementFromHtml(
+            `<div class="list-item-input flex-auto px-2 text-lg">
+                <input class="w-full bg-transparent border-none text-gray-600 focus:outline-none" value="${textDiv.innerHTML.trim()}" type="text">
+            </div>`
+        );
+
+        // create the Save button
+        // This button isn't hooked up! But because we're listening for "focusout" events,
+        // clicking the button will trigger that action
+        //var saveBtn = createElementFromHtml(
+            //`<div class="p-2 bd-highlight save-btn">
+                //<span class="badge">Save</span>
+            //</div>`
+        //);
+
+        // replace the Edit with Save
+        //var editBtn = li.getElementsByClassName('edit-btn')[0];
+        //li.replaceChild(saveBtn, editBtn);
+
+        // move Cursor to end of input
+        li.replaceChild(inputDiv, textDiv);
+        inputDiv.getElementsByTagName('input')[0].focus();
+
+        console.log("edited list item", id);
+    }
 
     completeListItem(id) {
         var li = document.getElementById(id);
@@ -293,65 +335,12 @@ class TodoList {
 
 
 
-/*
-// TODO
-editListItem(id) {
-    var li = document.getElementById(id);
-
-    // hide the DELETE button while we're editing
-    var deleteBtn = li.getElementsByClassName('delete-btn')[0];
-    deleteBtn.style.display = 'none';
-
-    // create a new Input div with value set to the list item text
-    var textDiv = li.getElementsByClassName('list-item-text')[0];
-    var inputDiv = createElementFromHtml(
-        `<div class="p-2 flex-grow-1 bd-highlight list-item-input">
-            <input type="text" class="form-control" placeholder="Feed the doggie..." value=${textDiv.innerHTML}>
-        </div>`
-    );
-
-            <div class="list-item-text flex-auto px-2 text-lg">
-                <input class="w-full bg-transparent border-none text-gray-700 focus:outline-none" type="text" placeholder="Feed the doggie">
-                <!--What up bruh-->
-            </div>
-
-    // create the Save button
-    // This button isn't hooked up! But because we're listening for "focusout" events,
-    // clicking the button will trigger that action
-    var saveBtn = createElementFromHtml(
-        `<div class="p-2 bd-highlight save-btn">
-            <span class="badge">Save</span>
-        </div>`
-    );
-
-    // replace the Edit with Save
-    var editBtn = li.getElementsByClassName('edit-btn')[0];
-    li.replaceChild(saveBtn, editBtn);
-
-    li.replaceChild(inputDiv, textDiv);
-    inputDiv.getElementsByTagName('input')[0].focus();
-
-    console.log("edited list item", id);
-}
-*/
 
 var ul = document.querySelector('#todo-list');
 var btnGroup = document.querySelector('#bulk-actions');
 var todoList = new TodoList(ul, btnGroup);
 
-todoList.ul.addEventListener(
-    'dblclick',
-    function(e) {
-        if (!e.target) {
-            return;
-        }
-
-        if (e.target.nodeName === "LI") {
-            console.log("double clicked li")
-        }
-    }
-);
-
+/*
 todoList.ul.addEventListener(
     'mouseover',
     function (e) {
@@ -364,39 +353,8 @@ todoList.ul.addEventListener(
         }
     }
 );
-
-// TESTING
-//todoList.addEntry("what up bruh");
-//todoList.dumpEntries();
-
-// run these actions whenever list item checkboxes get changed
-/*
-todoList.ul.addEventListener(
-    // better here to onclick? oncheck?
-    'change',
-    function (e) {
-        if (!e.target) {
-            return;
-        }
-
-        if (e.target.nodeName === "INPUT" && e.target.type === "checkbox") {
-            console.log("tagged the box", e.target.parentElement.parentElement.id);
-
-            var bulkActions = document.getElementById('bulk-container');
-            console.log(e.target);
-
-            var deselectBtn = bulkActions.getElementsByClassName('bulk-delete-selected')[0];
-            var markCompleteBtn = bulkActions.getElementsByClassName('bulk-mark-complete')[0];
-
-            // if all checkboxes are not checked, then add disabled back
-            deselectBtn.classList.remove("disabled");
-            markCompleteBtn.classList.remove("disabled");
-        }
-    }
-);
 */
 
-/*
 todoList.ul.addEventListener(
     'focusout',
     function (e) {
@@ -405,16 +363,13 @@ todoList.ul.addEventListener(
         }
 
         if (e.target.nodeName === "INPUT" && e.target.type !== "checkbox") {
-            //console.log("running focusout actions on input");
-            //console.log(e);
-
             var input = e.target;
             var itemInput = input.parentElement;
             var li = itemInput.parentElement;
 
             // create a new List Item Text using Item Input value
             var itemText = createElementFromHtml(
-                `<div class="p-2 flex-grow-1 bd-highlight list-item-text">
+                `<div class="list-item-text flex-auto px-2 text-lg text-gray-700">
                     ${input.value}
                 </div>`
             );
@@ -424,6 +379,7 @@ todoList.ul.addEventListener(
             // update state
             todoList._updateListItem(li.id, input.value);
 
+            /*
             // change Save button back to Edit button
             var saveBtn = li.getElementsByClassName("save-btn")[0];
             var editBtn = createElementFromHtml(
@@ -436,9 +392,7 @@ todoList.ul.addEventListener(
             // show the Delete button again
             var deleteBtn = li.getElementsByClassName('delete-btn')[0];
             deleteBtn.style.display = '';
-
-            console.log("finished editing item", li.id);
+            */
         }
     }
 );
-*/
