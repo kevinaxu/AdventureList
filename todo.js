@@ -35,6 +35,15 @@ class ListItem {
     setNotChecked() {
         this.checked = false;
     }
+
+    dump() {
+        return {
+            "id": this.id,
+            "text": this.text,
+            "state": this.state,
+            "checked": this.checked
+        }
+    }
 }
 
 /**
@@ -52,6 +61,13 @@ class TodoList {
         this.ul = ul;
         this.listItems = [];
 
+        // if we've already saved state in localStorage,
+        // let's recreate the List from there
+        var storageList = localStorage.getItem("MinimalList");
+        if (storageList) {
+            this.createFromLocalStorage(storageList);
+        }
+
         // shortcuts to Bulk Action buttons
         this.btnSelectAll = btnGroup.getElementsByClassName("bulk-select-all")[0];
         this.btnDeselectAll = btnGroup.getElementsByClassName("bulk-deselect-all")[0];
@@ -61,6 +77,19 @@ class TodoList {
         this.computeButtonState();
     }
 
+    createFromLocalStorage(storageList) {
+        var parsedList = JSON.parse(storageList);
+        parsedList.forEach(item => {
+            if (item.state === "active") {
+                this.addListItem(item.text);
+            } else if (item.state === "disabled") {
+                var ListItem = this.addListItem(item.text);
+                this.completeListItem(ListItem.id);
+            }
+        });
+    }
+
+
     /**
      * Helpers to maniupate List Item state
      */
@@ -69,7 +98,7 @@ class TodoList {
     }
 
     _completeListItem(id) {
-        var listItem = _getListItem(id);
+        var listItem = this._getListItem(id);
         listItem.state = "disabled";
     }
 
@@ -104,14 +133,8 @@ class TodoList {
     /**
      * Methods for List Item CRUD operations
      */
-    addListItem() {
-        var inputElement = document.getElementById('list-input');
-        var inputVal = inputElement.value;
-        if (!inputVal) {
-            return;
-        }
-        
-        var listItem = new ListItem(inputVal);
+    addListItem(text) {
+        var listItem = new ListItem(text);
         this._addListItem(listItem);
 
         var li = 
@@ -141,6 +164,16 @@ class TodoList {
 
         // insert the List Item, and clear out the input
         this.ul.insertAdjacentHTML('afterbegin', li);
+        return listItem;
+    }
+
+    addListItemUI() {
+        var inputElement = document.getElementById('list-input');
+        var inputVal = inputElement.value;
+        if (!inputVal) {
+            return;
+        }
+        var listItem = this.addListItem(inputVal);
         inputElement.value = "";
 
         this.computeButtonState();
@@ -159,6 +192,9 @@ class TodoList {
 
     editListItem(id) {
         var li = document.getElementById(id);
+        if (!li) {
+            return;
+        }
         
         // don't do anything if there's already an input
         var inputDiv = li.getElementsByClassName('list-item-input')[0];
@@ -245,6 +281,7 @@ class TodoList {
                 // add a strikethrough to the text
                 var text = li.getElementsByClassName('list-item-text')[0];
                 text.style.setProperty("text-decoration", "line-through");
+                this._completeListItem(item.id);
             });
         }
 
@@ -295,7 +332,6 @@ class TodoList {
         }
     }
     
-
     /**
      * Debugging Helpers
      */
@@ -304,26 +340,27 @@ class TodoList {
             console.log(item.dump());
         });
     }
+    dumpListItems() {
+        return this.listItems;
+    }
 }
 
 var ul = document.querySelector('#todo-list');
 var btnGroup = document.querySelector('#bulk-actions');
 var todoList = new TodoList(ul, btnGroup);
 
-/*
-todoList.ul.addEventListener(
-    'mouseover',
+
+/**
+ * Save the state to localStorage before unload
+ */
+window.addEventListener(
+    'beforeunload',
     function (e) {
-        if (!e.target) {
-            return;
-        }
-        if (e.target.nodeName === "LI") {
-            console.log("entering LI", e.target.id);
-            //console.log(e);
-        }
+        var jsonString = JSON.stringify(todoList.dumpListItems());
+        localStorage.setItem("MinimalList", jsonString);
+        return null;
     }
 );
-*/
 
 /**
  * When the List Item is being edited and we click away,
