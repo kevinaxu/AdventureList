@@ -1,0 +1,27 @@
+
+6/4, Thursday
+
+- Building out the table rows with Tailwind and Alpine.js
+
+- How to structure JS? functions, classes, objects?
+  - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Details_of_the_Object_Model
+  - JS classes were introduced in ECMAScript 2015 - syntactic sugar over JS's existing prototype-based inheritace
+
+- How to handle weight conversions?
+  - Each product row weight value/unit can be changed
+  - Each category table unit can be changed
+  - https://www.w3schools.com/howto/howto_js_weight_converter.asp
+
+6/3, Wednesday
+- Tailwind - how to refactor shared components?
+  - Mobile First breakpoint system
+  - Refactor by underlying HTML structure and keep CSS separate
+
+- What kind of responsiveness do we need?
+  - Mobile-FIRST, Mobile-friendly
+
+- Drag and Drop
+  - Libraries
+    - https://shopify.github.io/draggable/
+    - https://github.com/taye/interact.js
+
